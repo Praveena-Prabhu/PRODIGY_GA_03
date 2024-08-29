@@ -1,0 +1,47 @@
+import random
+from collections import defaultdict
+
+class MarkovChain:
+    def __init__(self, order=1):
+        self.order = order
+        self.model = defaultdict(lambda: defaultdict(int))
+
+    def train(self, text):
+        for i in range(len(text) - self.order):
+            state = text[i:i+self.order]
+            next_char = text[i+self.order]
+            self.model[state][next_char] += 1
+       
+        # Convert counts to probabilities
+        for state, next_chars in self.model.items():
+            total = float(sum(next_chars.values()))
+            for char in next_chars:
+                next_chars[char] /= total
+
+    def generate(self, length=100, seed=None):
+        if seed is None:
+            seed = random.choice(list(self.model.keys()))
+       
+        output = seed
+        current_state = seed
+       
+        for _ in range(length - self.order):
+            next_chars = self.model.get(current_state, {})
+            if not next_chars:
+                break
+            next_char = random.choices(list(next_chars.keys()), weights=next_chars.values())[0]
+            output += next_char
+            current_state = output[-self.order:]
+       
+        return output
+
+# Sample text
+text = "Markov chains are a powerful statistical model for text generation. This example demonstrates how to implement a simple Markov chain."
+
+# Create and train the Markov chain model
+markov = MarkovChain(order=2)  # Order 2 for bigram model
+markov.train(text)
+
+# Generate text
+generated_text = markov.generate(length=200, seed="Ma")
+print(generated_text)
